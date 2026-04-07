@@ -3,6 +3,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { Barber, Service } from '@/lib/types'
 import { formatPrice } from '@/lib/slots'
+import UserMenu from '@/components/user-menu'
+import SiteFooter from '@/components/site-footer'
 
 export default async function AgendarPage() {
   const supabase = await createClient()
@@ -19,15 +21,13 @@ export default async function AgendarPage() {
     .select('*')
     .eq('active', true)
 
-  const { data: { user } } = await supabase.auth.getUser()
-
   const barberList = (barbers || []) as Barber[]
   const serviceList = (services || []) as Service[]
 
   return (
-    <main className="min-h-dvh" style={{ backgroundColor: 'var(--color-bg)' }}>
+    <main className="min-h-dvh flex flex-col" style={{ backgroundColor: 'var(--color-bg)' }}>
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-4 max-w-3xl mx-auto">
+      <header className="flex items-center justify-between px-4 py-4 w-full max-w-3xl mx-auto">
         <Image
           src="/logo-barbearia.png"
           alt="Barbearia Brusquense"
@@ -36,23 +36,7 @@ export default async function AgendarPage() {
           className="object-contain"
           onError={undefined}
         />
-        {user ? (
-          <Link
-            href="/meus-agendamentos"
-            className="text-sm font-medium px-4 py-2 rounded-xl transition-colors"
-            style={{ color: 'var(--color-green-light)', border: '1px solid var(--color-border)' }}
-          >
-            Meus horários
-          </Link>
-        ) : (
-          <Link
-            href="/login"
-            className="text-sm font-medium px-4 py-2 rounded-xl transition-colors"
-            style={{ color: 'var(--color-green-light)', border: '1px solid var(--color-border)' }}
-          >
-            Entrar
-          </Link>
-        )}
+        <UserMenu />
       </header>
 
       {/* Title */}
@@ -69,17 +53,16 @@ export default async function AgendarPage() {
       </section>
 
       {/* Barber cards */}
-      <section className="px-4 pb-12 max-w-3xl mx-auto">
+      <section className="flex-1 px-4 pb-12 max-w-3xl mx-auto w-full">
         <div className="grid gap-4 sm:grid-cols-2">
           {barberList.map((barber) => {
             const barberServices = serviceList.filter(
               (s) => s.barber_id === barber.id
             )
             return (
-              <Link
+              <div
                 key={barber.id}
-                href={`/agendar/${barber.slug}`}
-                className="block rounded-2xl p-6 transition-all hover:scale-[1.02]"
+                className="rounded-2xl p-6"
                 style={{
                   backgroundColor: 'var(--color-surface)',
                   border: '1px solid var(--color-border)',
@@ -123,16 +106,22 @@ export default async function AgendarPage() {
                 {/* Services preview */}
                 <div className="flex flex-col gap-2">
                   {barberServices.slice(0, 3).map((service) => (
-                    <div
+                    <Link
                       key={service.id}
-                      className="flex items-center justify-between text-sm px-3 py-2 rounded-lg"
+                      href={`/agendar/${barber.slug}?service=${service.id}`}
+                      className="flex items-center justify-between text-sm px-3 py-2 rounded-lg transition-colors hover:brightness-125"
                       style={{ backgroundColor: '#1a1a1a' }}
                     >
-                      <span style={{ color: 'var(--color-white)' }}>{service.name}</span>
+                      <div className="flex flex-col">
+                        <span style={{ color: 'var(--color-white)' }}>{service.name}</span>
+                        <span className="text-[10px]" style={{ color: 'var(--color-gray)' }}>
+                          {service.duration_minutes} min
+                        </span>
+                      </div>
                       <span style={{ color: 'var(--color-green-light)' }}>
                         {formatPrice(service.price)}
                       </span>
-                    </div>
+                    </Link>
                   ))}
                   {barberServices.length > 3 && (
                     <p className="text-xs text-center mt-1" style={{ color: 'var(--color-gray)' }}>
@@ -142,35 +131,20 @@ export default async function AgendarPage() {
                 </div>
 
                 {/* CTA */}
-                <div
-                  className="mt-5 text-center py-3 rounded-xl text-sm font-semibold"
+                <Link
+                  href={`/agendar/${barber.slug}`}
+                  className="mt-5 block text-center py-3 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
                   style={{ backgroundColor: 'var(--color-green-primary)', color: 'var(--color-white)' }}
                 >
                   Agendar com {barber.name}
-                </div>
-              </Link>
+                </Link>
+              </div>
             )
           })}
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="px-4 pb-8 text-center">
-        <a
-          href="https://instagram.com/barbeariabrusquense"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs flex items-center justify-center gap-2 transition-opacity hover:opacity-80"
-          style={{ color: 'var(--color-gray)' }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-            <circle cx="12" cy="12" r="4"/>
-            <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
-          </svg>
-          @barbeariabrusquense
-        </a>
-      </footer>
+      <SiteFooter />
     </main>
   )
 }

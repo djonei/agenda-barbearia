@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { formatDate, nowInSaoPaulo, formatPrice } from '@/lib/slots'
 import { DAY_NAMES_SHORT, DAY_NAMES } from '@/lib/constants'
@@ -80,7 +81,7 @@ export default function AgendaPage() {
     const [aptsRes, blockedRes] = await Promise.all([
       supabase
         .from('appointments')
-        .select('*, service:services(*), barber:barbers(*)')
+        .select('*, service:services(*), barber:barbers(*), client:clients(*)')
         .gte('date', startDate)
         .lte('date', endDate),
       supabase
@@ -278,7 +279,7 @@ function DayView({
   const dow = dateObj.getDay()
 
   return (
-    <div className={`grid gap-4 ${barbers.length > 1 ? 'md:grid-cols-2' : 'grid-cols-1'}`}>
+    <div className={`grid gap-2 md:gap-4 ${barbers.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
       {barbers.map((barber) => {
         const schedule = schedules.find(
           (s) => s.barber_id === barber.id && s.day_of_week === dow && s.active
@@ -329,16 +330,16 @@ function DayView({
                     <button
                       key={time}
                       onClick={() => onAppointmentClick(apt)}
-                      className="w-full text-left rounded-lg px-3 py-2.5 flex items-center justify-between min-h-[44px] transition-colors"
+                      className="w-full text-left rounded-lg px-3 flex items-center justify-between gap-2 h-[44px] overflow-hidden transition-colors"
                       style={{ backgroundColor: 'rgba(45,122,58,0.2)', border: '1px solid var(--color-green-primary)' }}
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 shrink-0">
                         <span className="text-xs font-mono" style={{ color: 'var(--color-green-light)' }}>{time}</span>
                         <span className="text-sm font-medium" style={{ color: 'var(--color-white)' }}>
-                          {apt.client_name || apt.service?.name || 'Cliente'}
+                          {(apt.client?.name || apt.client_name || 'Cliente').split(' ')[0]}
                         </span>
                       </div>
-                      <span className="text-[10px]" style={{ color: 'var(--color-gray)' }}>
+                      <span className="text-[10px] text-right leading-tight" style={{ color: 'var(--color-gray)' }}>
                         {apt.service?.name}
                       </span>
                     </button>
@@ -349,7 +350,7 @@ function DayView({
                   return (
                     <div
                       key={time}
-                      className="rounded-lg px-3 py-2.5 flex items-center gap-2 min-h-[44px]"
+                      className="rounded-lg px-3 flex items-center gap-2 h-[44px]"
                       style={{ backgroundColor: '#1a1a1a', border: '1px solid var(--color-border)' }}
                     >
                       <span className="text-xs font-mono" style={{ color: '#444' }}>{time}</span>
@@ -360,27 +361,31 @@ function DayView({
 
                 if (cancelledApt) {
                   return (
-                    <div key={time} className="flex items-center gap-1">
+                    <div
+                      key={time}
+                      className="w-full rounded-lg flex items-center min-h-[44px] overflow-hidden"
+                      style={{ border: '1px solid #3a1a1a' }}
+                    >
+                      {/* Left: cancelled info — click to see details */}
                       <button
                         onClick={() => onAppointmentClick(cancelledApt)}
-                        className="flex-1 text-left rounded-lg px-3 py-2.5 flex items-center gap-2 min-h-[44px]"
-                        style={{ backgroundColor: '#1a1111', border: '1px solid #3a1a1a' }}
+                        className="flex items-center gap-2 px-3 py-2.5 flex-1 min-w-0"
+                        style={{ backgroundColor: '#1a1111' }}
                       >
-                        <span className="text-xs font-mono" style={{ color: '#666' }}>{time}</span>
-                        <span className="text-xs line-through" style={{ color: '#666' }}>
-                          {cancelledApt.client_name || cancelledApt.service?.name || 'Cancelado'}
-                        </span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: '#3a1a1a', color: 'var(--color-error)' }}>
-                          Cancelado
-                        </span>
+                        <span className="text-xs font-mono shrink-0" style={{ color: '#666' }}>{time}</span>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--color-error)" strokeWidth="2.5" strokeLinecap="round" className="shrink-0">
+                          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+                        </svg>
                       </button>
+                      {/* Divider */}
+                      <div className="w-px self-stretch" style={{ backgroundColor: '#3a1a1a' }} />
+                      {/* Right: available slot — click to book */}
                       <button
                         onClick={() => onSlotClick(barber.id, time)}
-                        className="p-2 rounded-lg"
-                        style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-green-primary)' }}
-                        title="Agendar neste horário"
+                        className="px-3 py-2.5 text-xs font-medium shrink-0"
+                        style={{ backgroundColor: 'var(--color-surface)', color: '#333' }}
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-green-light)" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Disponível
                       </button>
                     </div>
                   )
@@ -391,7 +396,7 @@ function DayView({
                   <button
                     key={time}
                     onClick={() => onSlotClick(barber.id, time)}
-                    className="w-full text-left rounded-lg px-3 py-2.5 flex items-center gap-2 min-h-[44px] transition-colors"
+                    className="w-full text-left rounded-lg px-3 flex items-center gap-2 h-[44px] transition-colors"
                     style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
                   >
                     <span className="text-xs font-mono" style={{ color: 'var(--color-gray)' }}>{time}</span>
@@ -493,7 +498,7 @@ function WeekView({
                       </span>
                     )}
                     <span style={{ color: 'var(--color-white)' }}>
-                      {dayAppts[0].client_name || dayAppts[0].service?.name}
+                      {(dayAppts[0].client?.name || dayAppts[0].client_name || dayAppts[0].service?.name || '').split(' ')[0]}
                     </span>
                     {dayAppts.length > 1 && (
                       <span style={{ color: 'var(--color-gray)' }}> +{dayAppts.length - 1}</span>
@@ -666,7 +671,7 @@ function AppointmentDetailModal({
     setCancelling(true)
     await supabase
       .from('appointments')
-      .update({ status: 'cancelled' })
+      .update({ status: 'cancelled', cancelled_by: 'barber' })
       .eq('id', appointment.id)
     onCancelled()
   }
@@ -683,19 +688,53 @@ function AppointmentDetailModal({
       </h2>
 
       {isCancelled && (
-        <div className="mb-4 rounded-lg px-3 py-2 text-xs font-bold text-center" style={{ backgroundColor: '#3a1a1a', color: 'var(--color-error)' }}>
-          CANCELADO
+        <div className="mb-4 rounded-lg px-3 py-2 text-xs text-center" style={{ backgroundColor: '#3a1a1a', color: 'var(--color-error)', border: '1px solid var(--color-error)' }}>
+          <span className="font-bold">CANCELADO</span>
+          <span className="font-normal ml-1">
+            {appointment.cancelled_by === 'client'
+              ? '— pelo cliente (app)'
+              : appointment.cancelled_by === 'barber'
+              ? `— pelo barbeiro${appointment.barber?.name ? ` (${appointment.barber.name})` : ''}`
+              : '— cancelado pelo barbeiro'}
+          </span>
         </div>
       )}
+
+      {/* Client info with photo */}
+      {(() => {
+        const clientName = appointment.client?.name || appointment.client_name || null
+        const avatarUrl = appointment.client?.avatar_url || null
+        const initial = clientName?.charAt(0).toUpperCase() || '?'
+        return (
+          <div className="flex items-center gap-4 mb-5 pb-4" style={{ borderBottom: '1px solid var(--color-border)' }}>
+            <div
+              className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center text-xl font-bold flex-shrink-0"
+              style={{ border: '2px solid var(--color-green-primary)', backgroundColor: '#1e1e1e', color: 'var(--color-green-light)' }}
+            >
+              {avatarUrl ? (
+                <Image src={avatarUrl} alt={clientName || 'Cliente'} width={64} height={64} className="rounded-full object-cover w-full h-full" />
+              ) : initial}
+            </div>
+            <div className="min-w-0">
+              <p className="text-lg font-semibold truncate" style={{ color: 'var(--color-white)' }}>
+                {clientName || '(sem nome)'}
+              </p>
+              {appointment.client_phone && (
+                <p className="text-sm" style={{ color: 'var(--color-gray)' }}>{appointment.client_phone}</p>
+              )}
+              <p className="text-xs mt-0.5" style={{ color: 'var(--color-gray)' }}>
+                {appointment.created_by === 'barber' ? 'Agendado pelo barbeiro' : 'Agendado pelo app'}
+              </p>
+            </div>
+          </div>
+        )
+      })()}
 
       <div className="flex flex-col gap-3">
         <DetailRow label="Barbeiro" value={appointment.barber?.name || '—'} />
         <DetailRow label="Serviço" value={appointment.service?.name || '—'} />
         <DetailRow label="Data" value={new Date(appointment.date + 'T12:00:00').toLocaleDateString('pt-BR')} />
         <DetailRow label="Horário" value={`${appointment.start_time.substring(0, 5)} — ${appointment.end_time.substring(0, 5)}`} />
-        <DetailRow label="Cliente" value={appointment.client_name || '(via app)'} />
-        {appointment.client_phone && <DetailRow label="Telefone" value={appointment.client_phone} />}
-        <DetailRow label="Origem" value={appointment.created_by === 'barber' ? 'Manual (barbeiro)' : 'App (cliente)'} />
         {appointment.service && <DetailRow label="Preço" value={formatPrice(appointment.service.price)} highlight />}
       </div>
 

@@ -70,8 +70,6 @@ export function calculateAvailableSlots(
   if (!schedule || !schedule.active) return []
 
   const slotDuration = schedule.slot_duration_minutes
-  const schedStart = timeToMinutes(schedule.start_time)
-  const schedEnd = timeToMinutes(schedule.end_time)
 
   // Calculate the minimum start time based on current time + advance
   const now = nowInSaoPaulo()
@@ -88,49 +86,69 @@ export function calculateAvailableSlots(
     (a) => a.status === 'active'
   )
 
-  // Generate all possible slot start times
+  // Build working periods (morning and/or afternoon)
+  const periods: Array<{ start: number; end: number }> = []
+  if (schedule.morning_active) {
+    periods.push({
+      start: timeToMinutes(schedule.morning_start),
+      end: timeToMinutes(schedule.morning_end),
+    })
+  }
+  if (schedule.afternoon_active) {
+    periods.push({
+      start: timeToMinutes(schedule.afternoon_start),
+      end: timeToMinutes(schedule.afternoon_end),
+    })
+  }
+  // Fallback to legacy single range if no periods set
+  if (periods.length === 0) {
+    periods.push({
+      start: timeToMinutes(schedule.start_time),
+      end: timeToMinutes(schedule.end_time),
+    })
+  }
+
   const slots: TimeSlot[] = []
 
-  for (let startMin = schedStart; startMin + serviceDurationMinutes <= schedEnd; startMin += slotDuration) {
-    const endMin = startMin + serviceDurationMinutes
-    const time = minutesToTime(startMin)
+  for (const period of periods) {
+    for (let startMin = period.start; startMin + serviceDurationMinutes <= period.end; startMin += slotDuration) {
+      const endMin = startMin + serviceDurationMinutes
+      const time = minutesToTime(startMin)
 
-    // Check if slot is in the past (with advance time)
-    if (date < today) {
-      slots.push({ time, available: false })
-      continue
+      if (date < today) {
+        slots.push({ time, available: false })
+        continue
+      }
+
+      if (startMin < minStartMinutes) {
+        slots.push({ time, available: false })
+        continue
+      }
+
+      const hasAppointmentConflict = activeAppointments.some((apt) => {
+        const aptStart = timeToMinutes(apt.start_time)
+        const aptEnd = timeToMinutes(apt.end_time)
+        return rangesOverlap(startMin, endMin, aptStart, aptEnd)
+      })
+
+      if (hasAppointmentConflict) {
+        slots.push({ time, available: false })
+        continue
+      }
+
+      const hasBlockedConflict = blockedSlots.some((bs) => {
+        const bsStart = timeToMinutes(bs.start_time)
+        const bsEnd = timeToMinutes(bs.end_time)
+        return rangesOverlap(startMin, endMin, bsStart, bsEnd)
+      })
+
+      if (hasBlockedConflict) {
+        slots.push({ time, available: false })
+        continue
+      }
+
+      slots.push({ time, available: true })
     }
-
-    if (startMin < minStartMinutes) {
-      slots.push({ time, available: false })
-      continue
-    }
-
-    // Check appointment conflicts
-    const hasAppointmentConflict = activeAppointments.some((apt) => {
-      const aptStart = timeToMinutes(apt.start_time)
-      const aptEnd = timeToMinutes(apt.end_time)
-      return rangesOverlap(startMin, endMin, aptStart, aptEnd)
-    })
-
-    if (hasAppointmentConflict) {
-      slots.push({ time, available: false })
-      continue
-    }
-
-    // Check blocked slot conflicts
-    const hasBlockedConflict = blockedSlots.some((bs) => {
-      const bsStart = timeToMinutes(bs.start_time)
-      const bsEnd = timeToMinutes(bs.end_time)
-      return rangesOverlap(startMin, endMin, bsStart, bsEnd)
-    })
-
-    if (hasBlockedConflict) {
-      slots.push({ time, available: false })
-      continue
-    }
-
-    slots.push({ time, available: true })
   }
 
   return slots

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -19,12 +19,46 @@ interface Props {
 
 export default function BookingFlow({ barber, services, schedules }: Props) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
+
+  const storageKey = `booking_pending_${barber.id}`
 
   const [step, setStep] = useState<Step>(1)
   const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
+  const [pendingRestore, setPendingRestore] = useState(false)
+
+  // Preselect service from ?service= query param
+  useEffect(() => {
+    const serviceId = searchParams.get('service')
+    if (!serviceId) return
+    const svc = services.find((s) => s.id === serviceId)
+    if (svc) {
+      setSelectedService(svc)
+      setStep(2)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Restore pending booking from sessionStorage (after login redirect)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const raw = sessionStorage.getItem(storageKey)
+    if (!raw) return
+    try {
+      const data = JSON.parse(raw) as { serviceId: string; date: string; time: string }
+      const svc = services.find((s) => s.id === data.serviceId)
+      if (svc && data.date && data.time) {
+        setSelectedService(svc)
+        setSelectedDate(data.date)
+        setSelectedTime(data.time)
+        setStep(4)
+        setPendingRestore(true)
+      }
+    } catch {}
+  }, [storageKey, services])
 
   // Calendar state
   const now = nowInSaoPaulo()
@@ -154,8 +188,18 @@ export default function BookingFlow({ barber, services, schedules }: Props) {
       return
     }
 
+    sessionStorage.removeItem(storageKey)
     router.push('/meus-agendamentos?sucesso=1')
   }
+
+  // Auto-confirm after login redirect
+  useEffect(() => {
+    if (pendingRestore && userId && !confirming && selectedService && selectedDate && selectedTime) {
+      setPendingRestore(false)
+      confirmBooking()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingRestore, userId])
 
   // Calendar navigation limits
   const canPrevMonth = calYear > now.getFullYear() || calMonth > now.getMonth()
@@ -435,6 +479,15 @@ export default function BookingFlow({ barber, services, schedules }: Props) {
                 </p>
                 <Link
                   href={`/login?next=/agendar/${barber.slug}`}
+                  onClick={() => {
+                    if (selectedService && selectedDate && selectedTime) {
+                      sessionStorage.setItem(storageKey, JSON.stringify({
+                        serviceId: selectedService.id,
+                        date: selectedDate,
+                        time: selectedTime,
+                      }))
+                    }
+                  }}
                   className="block w-full text-center rounded-xl py-3 text-sm font-semibold min-h-[48px] leading-[48px]"
                   style={{ backgroundColor: 'var(--color-green-primary)', color: 'var(--color-white)' }}
                 >

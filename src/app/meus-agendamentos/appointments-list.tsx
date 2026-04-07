@@ -7,6 +7,8 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { formatPrice, formatDateDisplay, nowInSaoPaulo, formatDate } from '@/lib/slots'
 import type { Appointment } from '@/lib/types'
+import UserMenu from '@/components/user-menu'
+import SiteFooter from '@/components/site-footer'
 
 interface Props {
   appointments: Appointment[]
@@ -59,23 +61,26 @@ export default function AppointmentsList({ appointments: initialAppointments }: 
   }
 
   return (
-    <main className="min-h-dvh" style={{ backgroundColor: 'var(--color-bg)' }}>
+    <main className="min-h-dvh flex flex-col" style={{ backgroundColor: 'var(--color-bg)' }}>
       {/* Header */}
       <header
-        className="sticky top-0 z-10 px-4 py-3 flex items-center gap-3"
+        className="sticky top-0 z-10 px-4 py-3 flex items-center justify-between gap-3"
         style={{ backgroundColor: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}
       >
-        <Link href="/agendar" className="p-2 -ml-2" style={{ color: 'var(--color-gray)' }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </Link>
-        <h1 className="text-lg font-semibold" style={{ color: 'var(--color-white)' }}>
-          Meus Agendamentos
-        </h1>
+        <div className="flex items-center gap-2">
+          <Link href="/agendar" className="p-2 -ml-2" style={{ color: 'var(--color-gray)' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </Link>
+          <h1 className="text-lg font-semibold" style={{ color: 'var(--color-white)' }}>
+            Meus Agendamentos
+          </h1>
+        </div>
+        <UserMenu />
       </header>
 
-      <div className="px-4 py-6 max-w-lg mx-auto">
+      <div className="flex-1 px-4 py-6 max-w-lg mx-auto w-full">
         {/* Success message */}
         {successMessage && (
           <div
@@ -172,6 +177,7 @@ export default function AppointmentsList({ appointments: initialAppointments }: 
           </Link>
         </div>
       </div>
+      <SiteFooter />
     </main>
   )
 }

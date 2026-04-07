@@ -16,6 +16,14 @@ export interface Service {
   active: boolean
 }
 
+export interface Client {
+  id: string
+  name: string
+  email: string
+  phone: string | null
+  avatar_url: string | null
+}
+
 export interface BarberSchedule {
   id: string
   barber_id: string
@@ -24,6 +32,12 @@ export interface BarberSchedule {
   end_time: string
   slot_duration_minutes: number
   active: boolean
+  morning_active: boolean
+  morning_start: string
+  morning_end: string
+  afternoon_active: boolean
+  afternoon_start: string
+  afternoon_end: string
 }
 
 export interface BlockedSlot {
@@ -33,6 +47,7 @@ export interface BlockedSlot {
   start_time: string
   end_time: string
   reason: string | null
+  all_day: boolean
 }
 
 export interface Appointment {
@@ -47,10 +62,12 @@ export interface Appointment {
   end_time: string
   status: 'active' | 'cancelled'
   created_by: 'client' | 'barber'
+  cancelled_by: 'client' | 'barber' | null
   created_at: string
   // Joined fields
   service?: Service
   barber?: Barber
+  client?: Client | null
 }
 
 export interface TimeSlot {
