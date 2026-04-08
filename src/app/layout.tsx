@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Bebas_Neue, DM_Sans } from 'next/font/google'
 import './globals.css'
 
@@ -41,6 +41,9 @@ export const metadata: Metadata = {
     description: 'Barbearia em Brusque com equipe preparada para oferecer cortes tradicionais e modernos, com atendimento de qualidade.',
     images: ['/og-image.jpg'],
   },
+}
+
+export const viewport: Viewport = {
   themeColor: '#0a0a0a',
 }
 
