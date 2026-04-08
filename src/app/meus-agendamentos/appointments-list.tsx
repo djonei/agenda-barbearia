@@ -9,6 +9,7 @@ import { formatPrice, formatDateDisplay, nowInSaoPaulo, formatDate } from '@/lib
 import type { Appointment } from '@/lib/types'
 import UserMenu from '@/components/user-menu'
 import SiteFooter from '@/components/site-footer'
+import InstallBanner from '@/components/install-banner'
 
 interface Props {
   appointments: Appointment[]
@@ -93,6 +94,9 @@ export default function AppointmentsList({ appointments: initialAppointments }: 
             </button>
           </div>
         )}
+
+        {/* Install banner — shown only right after a booking */}
+        {showSuccess && <InstallBanner />}
 
         {appointments.length === 0 ? (
           <div className="text-center py-16">
