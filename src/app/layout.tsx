@@ -17,7 +17,31 @@ const dmSans = DM_Sans({
 
 export const metadata: Metadata = {
   title: 'Barbearia Brusquense',
-  description: 'Agende seu horário online com facilidade.',
+  description: 'Barbearia em Brusque com equipe preparada para oferecer cortes tradicionais e modernos, com atendimento de qualidade.',
+  metadataBase: new URL('https://agenda-barbearia-git-main-djoneis-projects.vercel.app'),
+  openGraph: {
+    title: 'Barbearia Brusquense',
+    description: 'Barbearia em Brusque com equipe preparada para oferecer cortes tradicionais e modernos, com atendimento de qualidade.',
+    url: 'https://agenda-barbearia-git-main-djoneis-projects.vercel.app',
+    siteName: 'Barbearia Brusquense',
+    images: [
+      {
+        url: '/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Barbearia Brusquense',
+      },
+    ],
+    locale: 'pt_BR',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Barbearia Brusquense',
+    description: 'Barbearia em Brusque com equipe preparada para oferecer cortes tradicionais e modernos, com atendimento de qualidade.',
+    images: ['/og-image.jpg'],
+  },
+  themeColor: '#0a0a0a',
 }
 
 export default function RootLayout({
