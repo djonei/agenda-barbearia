@@ -278,6 +278,10 @@ function DayView({
   const dateObj = new Date(date + 'T12:00:00')
   const dow = dateObj.getDay()
 
+  const nowSP = nowInSaoPaulo()
+  const isToday = date === formatDate(nowSP)
+  const currentHour = nowSP.getHours()
+
   return (
     <div className={`grid gap-2 md:gap-4 ${barbers.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
       {barbers.map((barber) => {
@@ -324,6 +328,7 @@ function DayView({
                   const bEnd = b.end_time.substring(0, 5)
                   return time >= bStart && time < bEnd
                 })
+                const isCurrentHour = isToday && parseInt(time.split(':')[0]) === currentHour
 
                 if (apt) {
                   return (
@@ -331,10 +336,13 @@ function DayView({
                       key={time}
                       onClick={() => onAppointmentClick(apt)}
                       className="w-full text-left rounded-lg px-3 flex items-center justify-between gap-2 h-[44px] overflow-hidden transition-colors"
-                      style={{ backgroundColor: 'rgba(45,122,58,0.2)', border: '1px solid var(--color-green-primary)' }}
+                      style={{
+                        backgroundColor: isCurrentHour ? 'rgba(234,179,8,0.18)' : 'rgba(45,122,58,0.2)',
+                        border: `1px solid ${isCurrentHour ? 'rgba(234,179,8,0.7)' : 'var(--color-green-primary)'}`,
+                      }}
                     >
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-xs font-mono" style={{ color: 'var(--color-green-light)' }}>{time}</span>
+                        <span className="text-xs font-mono font-bold" style={{ color: 'var(--color-white)' }}>{time}</span>
                         <span className="text-sm font-medium" style={{ color: 'var(--color-white)' }}>
                           {(apt.client?.name || apt.client_name || 'Cliente').split(' ')[0]}
                         </span>
@@ -351,7 +359,10 @@ function DayView({
                     <div
                       key={time}
                       className="rounded-lg px-3 flex items-center gap-2 h-[44px]"
-                      style={{ backgroundColor: '#1a1a1a', border: '1px solid var(--color-border)' }}
+                      style={{
+                        backgroundColor: isCurrentHour ? 'rgba(234,179,8,0.06)' : '#1a1a1a',
+                        border: `1px solid ${isCurrentHour ? 'rgba(234,179,8,0.3)' : 'var(--color-border)'}`,
+                      }}
                     >
                       <span className="text-xs font-mono" style={{ color: '#444' }}>{time}</span>
                       <span className="text-xs" style={{ color: '#444' }}>Bloqueado</span>
@@ -364,13 +375,13 @@ function DayView({
                     <div
                       key={time}
                       className="w-full rounded-lg flex items-center min-h-[44px] overflow-hidden"
-                      style={{ border: '1px solid #3a1a1a' }}
+                      style={{ border: `1px solid ${isCurrentHour ? 'rgba(234,179,8,0.3)' : '#3a1a1a'}` }}
                     >
                       {/* Left: cancelled info — click to see details */}
                       <button
                         onClick={() => onAppointmentClick(cancelledApt)}
                         className="flex items-center gap-2 px-3 py-2.5 flex-1 min-w-0"
-                        style={{ backgroundColor: '#1a1111' }}
+                        style={{ backgroundColor: isCurrentHour ? 'rgba(234,179,8,0.05)' : '#1a1111' }}
                       >
                         <span className="text-xs font-mono shrink-0" style={{ color: '#666' }}>{time}</span>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--color-error)" strokeWidth="2.5" strokeLinecap="round" className="shrink-0">
@@ -378,7 +389,7 @@ function DayView({
                         </svg>
                       </button>
                       {/* Divider */}
-                      <div className="w-px self-stretch" style={{ backgroundColor: '#3a1a1a' }} />
+                      <div className="w-px self-stretch" style={{ backgroundColor: isCurrentHour ? 'rgba(234,179,8,0.3)' : '#3a1a1a' }} />
                       {/* Right: available slot — click to book */}
                       <button
                         onClick={() => onSlotClick(barber.id, time)}
@@ -397,10 +408,13 @@ function DayView({
                     key={time}
                     onClick={() => onSlotClick(barber.id, time)}
                     className="w-full text-left rounded-lg px-3 flex items-center gap-2 h-[44px] transition-colors"
-                    style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+                    style={{
+                      backgroundColor: isCurrentHour ? 'rgba(234,179,8,0.08)' : 'var(--color-surface)',
+                      border: `1px solid ${isCurrentHour ? 'rgba(234,179,8,0.4)' : 'var(--color-border)'}`,
+                    }}
                   >
-                    <span className="text-xs font-mono" style={{ color: 'var(--color-gray)' }}>{time}</span>
-                    <span className="text-xs" style={{ color: '#333' }}>Disponível</span>
+                    <span className="text-xs font-mono font-bold" style={{ color: 'var(--color-white)' }}>{time}</span>
+                    <span className="text-xs" style={{ color: isCurrentHour ? 'rgba(234,179,8,0.6)' : '#333' }}>Disponível</span>
                   </button>
                 )
               })}
