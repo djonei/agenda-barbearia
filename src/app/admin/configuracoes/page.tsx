@@ -31,8 +31,8 @@ export default function ConfiguracoesPage() {
   const [saveError, setSaveError] = useState<string | null>(null)
   const [showBlockModal, setShowBlockModal] = useState(false)
 
-  // Dirty check — compare only the fields that matter
-  const TRACK = ['active','morning_active','morning_start','morning_end','afternoon_active','afternoon_start','afternoon_end','slot_duration_minutes'] as const
+  // Dirty check — include start_time/end_time so drift from computeStartEnd is detected
+  const TRACK = ['active','morning_active','morning_start','morning_end','afternoon_active','afternoon_start','afternoon_end','slot_duration_minutes','start_time','end_time'] as const
   const isDirty = localSchedules.some((local) => {
     const saved = savedSchedules.find((s) => s.id === local.id)
     if (!saved) return true
@@ -52,9 +52,14 @@ export default function ConfiguracoesPage() {
     ])
     const barbersData     = (barbersRes.data    || []) as Barber[]
     const schedulesData   = (schedulesRes.data  || []) as BarberSchedule[]
+    // Apply computeStartEnd so localSchedules always has correct start_time/end_time
+    const corrected = schedulesData.map((s) => {
+      const { start_time, end_time } = computeStartEnd(s)
+      return { ...s, start_time, end_time }
+    })
     setBarbers(barbersData)
     setSavedSchedules(schedulesData)
-    setLocalSchedules(structuredClone(schedulesData))
+    setLocalSchedules(structuredClone(corrected))
     setBlockedSlots((blockedRes.data || []) as BlockedSlot[])
     if (!selectedBarberId && barbersData.length > 0) setSelectedBarberId(barbersData[0].id)
     setLoading(false)
