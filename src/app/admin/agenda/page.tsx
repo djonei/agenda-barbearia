@@ -125,6 +125,13 @@ export default function AgendaPage() {
 
   return (
     <div className="px-4 py-4">
+      <h1
+        className="text-3xl mb-4 tracking-wide"
+        style={{ fontFamily: 'var(--font-bebas)', color: 'var(--color-white)' }}
+      >
+        Administrativo
+      </h1>
+
       {/* Controls bar */}
       <div className="flex flex-col gap-3 mb-4">
         {/* Filter */}

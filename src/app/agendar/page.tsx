@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Image from 'next/image'
 import type { Barber, Service } from '@/lib/types'
@@ -5,8 +6,32 @@ import UserMenu from '@/components/user-menu'
 import SiteFooter from '@/components/site-footer'
 import BarberCard from './barber-card'
 
-export default async function AgendarPage() {
+export default async function AgendarPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ bypass?: string }>
+}) {
   const supabase = await createClient()
+  const params = await searchParams
+
+  // Check logged-in user once
+  const { data: { user } } = await supabase.auth.getUser()
+
+  let isBarber = false
+  if (user) {
+    const { data: barberRow } = await supabase
+      .from('barbers')
+      .select('id')
+      .eq('email', user.email)
+      .single()
+
+    isBarber = !!barberRow
+
+    // Redirect barbers to the admin panel unless they came via the bypass link
+    if (isBarber && params.bypass !== '1') {
+      redirect('/admin/agenda')
+    }
+  }
 
   // Only barbers with a slug (public page)
   const { data: barbers } = await supabase
@@ -35,7 +60,7 @@ export default async function AgendarPage() {
           className="object-contain"
           onError={undefined}
         />
-        <UserMenu />
+        <UserMenu isBarber={isBarber} />
       </header>
 
       {/* Title */}

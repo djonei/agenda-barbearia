@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import type { ReactNode } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Barber } from '@/lib/types'
 
@@ -89,13 +90,22 @@ export default function AdminShell({ currentBarber, children }: Props) {
               </p>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="w-full text-xs py-2 rounded-lg transition-colors"
-            style={{ color: 'var(--color-gray)', border: '1px solid var(--color-border)' }}
-          >
-            Sair
-          </button>
+          <div className="flex gap-2">
+            <Link
+              href="/agendar?bypass=1"
+              className="flex-1 text-xs py-2 rounded-lg text-center transition-colors"
+              style={{ color: 'var(--color-gray)', border: '1px solid var(--color-border)' }}
+            >
+              Agenda
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="flex-1 text-xs py-2 rounded-lg transition-colors"
+              style={{ color: 'var(--color-gray)', border: '1px solid var(--color-border)' }}
+            >
+              Sair
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -121,13 +131,22 @@ export default function AdminShell({ currentBarber, children }: Props) {
               {currentBarber.name}
             </span>
           </div>
-          <button
-            onClick={handleLogout}
-            className="text-xs px-3 py-1.5 rounded-lg"
-            style={{ color: 'var(--color-gray)', border: '1px solid var(--color-border)' }}
-          >
-            Sair
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/agendar?bypass=1"
+              className="text-xs px-3 py-1.5 rounded-lg"
+              style={{ color: 'var(--color-gray)', border: '1px solid var(--color-border)' }}
+            >
+              Agenda
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="text-xs px-3 py-1.5 rounded-lg"
+              style={{ color: 'var(--color-gray)', border: '1px solid var(--color-border)' }}
+            >
+              Sair
+            </button>
+          </div>
         </header>
 
         {children}

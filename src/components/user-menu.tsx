@@ -11,7 +11,11 @@ interface UserInfo {
   avatarUrl: string | null
 }
 
-export default function UserMenu() {
+interface Props {
+  isBarber?: boolean
+}
+
+export default function UserMenu({ isBarber = false }: Props) {
   const supabase = createClient()
   const [user, setUser] = useState<UserInfo | null>(null)
   const [loading, setLoading] = useState(true)
@@ -142,13 +146,25 @@ export default function UserMenu() {
           </div>
         )}
       </div>
-      <Link
-        href="/meus-agendamentos"
-        className="text-xs font-medium hover:underline"
-        style={{ color: 'var(--color-green-light)' }}
-      >
-        Meus agendamentos
-      </Link>
+
+      {/* Secondary link: admin panel for barbers, appointments for clients */}
+      {isBarber ? (
+        <Link
+          href="/admin/agenda"
+          className="text-xs font-medium hover:underline"
+          style={{ color: 'var(--color-green-light)' }}
+        >
+          Administrativo
+        </Link>
+      ) : (
+        <Link
+          href="/meus-agendamentos"
+          className="text-xs font-medium hover:underline"
+          style={{ color: 'var(--color-green-light)' }}
+        >
+          Meus agendamentos
+        </Link>
+      )}
     </div>
   )
 }
