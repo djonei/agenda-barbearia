@@ -19,11 +19,11 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: 'Barbearia Brusquense',
   description: 'Barbearia em Brusque com equipe preparada para oferecer cortes tradicionais e modernos, com atendimento de qualidade.',
-  metadataBase: new URL('https://agenda-barbearia-git-main-djoneis-projects.vercel.app'),
+  metadataBase: new URL('https://www.barbeariabrusquense.com.br'),
   openGraph: {
     title: 'Barbearia Brusquense',
     description: 'Barbearia em Brusque com equipe preparada para oferecer cortes tradicionais e modernos, com atendimento de qualidade.',
-    url: 'https://agenda-barbearia-git-main-djoneis-projects.vercel.app',
+    url: 'https://www.barbeariabrusquense.com.br',
     siteName: 'Barbearia Brusquense',
     images: [
       {
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Barbearia Brusquense',
     description: 'Barbearia em Brusque com equipe preparada para oferecer cortes tradicionais e modernos, com atendimento de qualidade.',
-    images: ['/og-image.jpg'],
+    images: ['https://www.barbeariabrusquense.com.br/og-image.jpg'],
   },
 }
 
