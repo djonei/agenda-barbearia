@@ -1,9 +1,39 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { DAY_NAMES } from '@/lib/constants'
 import type { Barber, BarberSchedule, BlockedSlot } from '@/lib/types'
+
+// Resize an image to maxSize × maxSize, converting to WebP
+async function resizeImage(file: File, maxSize = 256): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      const canvas = document.createElement('canvas')
+      let { width, height } = img
+      if (width > height) {
+        if (width > maxSize) { height = Math.round((height * maxSize) / width); width = maxSize }
+      } else {
+        if (height > maxSize) { width = Math.round((width * maxSize) / height); height = maxSize }
+      }
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, 0, 0, width, height)
+      canvas.toBlob(
+        (blob) => { if (blob) resolve(blob); else reject(new Error('Falha ao converter imagem')) },
+        'image/webp',
+        0.85,
+      )
+    }
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Falha ao carregar imagem')) }
+    img.src = url
+  })
+}
 
 // Derive start_time / end_time from the morning+afternoon periods
 function computeStartEnd(s: Partial<BarberSchedule>): { start_time: string; end_time: string } {
@@ -30,6 +60,9 @@ export default function ConfiguracoesPage() {
   const [saving, setSaving]     = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [showBlockModal, setShowBlockModal] = useState(false)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const [avatarError, setAvatarError] = useState<string | null>(null)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
 
   // Dirty check — include start_time/end_time so drift from computeStartEnd is detected
   const TRACK = ['active','morning_active','morning_start','morning_end','afternoon_active','afternoon_start','afternoon_end','slot_duration_minutes','start_time','end_time'] as const
@@ -148,9 +181,97 @@ export default function ConfiguracoesPage() {
   }
 
   const barberSchedules = localSchedules.filter((s) => s.barber_id === selectedBarberId)
+  const selectedBarber = barbers.find((b) => b.id === selectedBarberId) ?? null
+
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !selectedBarberId) return
+    setAvatarUploading(true)
+    setAvatarError(null)
+    try {
+      const resized = await resizeImage(file)
+      const path = `${selectedBarberId}/${Date.now()}.webp`
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, resized, { contentType: 'image/webp', upsert: true })
+      if (uploadError) throw uploadError
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
+      const { error: updateError } = await supabase
+        .from('barbers')
+        .update({ avatar_url: publicUrl })
+        .eq('id', selectedBarberId)
+      if (updateError) throw updateError
+      setBarbers((prev) => prev.map((b) => b.id === selectedBarberId ? { ...b, avatar_url: publicUrl } : b))
+    } catch {
+      setAvatarError('Erro ao enviar foto. Tente novamente.')
+    } finally {
+      setAvatarUploading(false)
+      if (avatarInputRef.current) avatarInputRef.current.value = ''
+    }
+  }
 
   return (
     <div className="px-4 py-4 max-w-3xl mx-auto pb-28">
+
+      {/* Avatar section */}
+      {selectedBarber && (
+        <div className="mb-6 flex items-center gap-4">
+          <div className="relative flex-shrink-0">
+            <div
+              className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center text-2xl font-bold"
+              style={{ backgroundColor: 'var(--color-surface)', border: '2px solid var(--color-border)', color: 'var(--color-white)' }}
+            >
+              {selectedBarber.avatar_url ? (
+                <Image
+                  src={selectedBarber.avatar_url}
+                  alt={selectedBarber.name}
+                  width={64}
+                  height={64}
+                  className="object-cover w-full h-full"
+                  unoptimized={selectedBarber.avatar_url.startsWith('/') }
+                />
+              ) : (
+                selectedBarber.name.charAt(0).toUpperCase()
+              )}
+            </div>
+            <button
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={avatarUploading}
+              title="Trocar foto"
+              className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center disabled:opacity-50"
+              style={{ backgroundColor: 'var(--color-green-primary)', border: '2px solid var(--color-bg)' }}
+            >
+              {avatarUploading ? (
+                <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+              )}
+            </button>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarUpload}
+            />
+          </div>
+          <div>
+            <p className="text-base font-semibold" style={{ color: 'var(--color-white)' }}>
+              {selectedBarber.name}
+            </p>
+            <p className="text-xs" style={{ color: 'var(--color-gray)' }}>
+              {avatarUploading ? 'Enviando foto...' : 'Clique na câmera para trocar o avatar'}
+            </p>
+            {avatarError && (
+              <p className="text-xs mt-0.5" style={{ color: 'var(--color-error)' }}>{avatarError}</p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Barber selector */}
       <div className="mb-6">
         <label className="block text-xs font-medium mb-2" style={{ color: 'var(--color-gray)' }}>
