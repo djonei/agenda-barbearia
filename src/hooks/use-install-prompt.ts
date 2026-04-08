@@ -3,13 +3,10 @@
 import { useState, useEffect } from 'react'
 import { getDeferredPrompt, clearDeferredPrompt } from '@/lib/pwa'
 
-const DISMISSED_KEY = 'pwa_install_dismissed'
-
 export function useInstallPrompt() {
   const [hasPrompt, setHasPrompt] = useState(false)
   const [isInstalled, setIsInstalled] = useState(false)
   const [isIOSSafari, setIsIOSSafari] = useState(false)
-  const [dismissed, setDismissed] = useState(false)
 
   useEffect(() => {
     // Already running as installed PWA (standalone)
@@ -17,9 +14,6 @@ export function useInstallPrompt() {
       window.matchMedia('(display-mode: standalone)').matches ||
       (navigator as Navigator & { standalone?: boolean }).standalone === true
     setIsInstalled(standalone)
-
-    // Previously dismissed
-    setDismissed(localStorage.getItem(DISMISSED_KEY) === '1')
 
     // iOS Safari detection (not Chrome/Firefox on iOS)
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent)
@@ -53,15 +47,8 @@ export function useInstallPrompt() {
     return outcome === 'accepted'
   }
 
-  function dismiss() {
-    localStorage.setItem(DISMISSED_KEY, '1')
-    setDismissed(true)
-  }
+  const canInstall = !isInstalled && hasPrompt
+  const showIOS = !isInstalled && isIOSSafari
 
-  // canInstall  → Chrome / Edge Android with prompt ready
-  // showIOS     → iOS Safari, needs manual share-sheet instructions
-  const canInstall = !isInstalled && !dismissed && hasPrompt
-  const showIOS = !isInstalled && !dismissed && isIOSSafari
-
-  return { canInstall, showIOS, isInstalled, install, dismiss }
+  return { canInstall, showIOS, isInstalled, install }
 }
