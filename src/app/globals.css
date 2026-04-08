@@ -36,11 +36,23 @@ html {
 
 body {
   background-color: var(--color-bg);
+  background-image: url('/bck-desktop.webp');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   color: var(--color-white);
   font-family: var(--font-dm-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100dvh;
+}
+
+@media (max-width: 768px) {
+  body {
+    background-image: url('/bck-mobile.webp');
+    background-attachment: scroll;
+  }
 }
 
 /* Scrollbar */

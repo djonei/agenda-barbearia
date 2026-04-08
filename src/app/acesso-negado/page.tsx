@@ -4,7 +4,6 @@ export default function AcessoNegadoPage() {
   return (
     <main
       className="min-h-dvh flex flex-col items-center justify-center px-4"
-      style={{ backgroundColor: 'var(--color-bg)' }}
     >
       <div
         className="w-full max-w-sm rounded-2xl p-8 text-center"

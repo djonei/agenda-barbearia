@@ -64,8 +64,7 @@ function LoginContent() {
   }
 
   return (
-    <main className="min-h-dvh flex flex-col items-center justify-center px-4 py-12"
-      style={{ backgroundColor: 'var(--color-bg)' }}>
+    <main className="min-h-dvh flex flex-col items-center justify-center px-4 py-12">
 
       {/* Logo */}
       <div className="mb-8">

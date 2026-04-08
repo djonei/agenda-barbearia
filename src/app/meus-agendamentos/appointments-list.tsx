@@ -61,7 +61,7 @@ export default function AppointmentsList({ appointments: initialAppointments }: 
   }
 
   return (
-    <main className="min-h-dvh flex flex-col" style={{ backgroundColor: 'var(--color-bg)' }}>
+    <main className="min-h-dvh flex flex-col">
       {/* Header */}
       <header
         className="sticky top-0 z-10 px-4 py-3 flex items-center justify-between gap-3"

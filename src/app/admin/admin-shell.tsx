@@ -28,7 +28,7 @@ export default function AdminShell({ currentBarber, children }: Props) {
   }
 
   return (
-    <div className="min-h-dvh flex" style={{ backgroundColor: 'var(--color-bg)' }}>
+    <div className="min-h-dvh flex">
       {/* Desktop Sidebar */}
       <aside
         className="hidden md:flex flex-col w-60 fixed top-0 left-0 h-full z-20"

@@ -207,7 +207,7 @@ export default function BookingFlow({ barber, services, schedules }: Props) {
     new Date(calYear, calMonth + 1, 1) <= new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 1)
 
   return (
-    <main className="min-h-dvh" style={{ backgroundColor: 'var(--color-bg)' }}>
+    <main className="min-h-dvh">
       {/* Header */}
       <header
         className="sticky top-0 z-10 px-4 py-3 flex items-center gap-3"
@@ -236,39 +236,40 @@ export default function BookingFlow({ barber, services, schedules }: Props) {
 
       {/* Step indicator */}
       <div className="px-4 py-4 max-w-lg mx-auto">
-        <div className="flex items-center gap-2">
-          {[1, 2, 3, 4].map((s) => (
-            <div key={s} className="flex items-center gap-2 flex-1">
-              <button
-                onClick={() => goToStep(s as Step)}
-                disabled={s > step}
-                className="w-8 h-8 rounded-full text-xs font-bold flex items-center justify-center transition-colors flex-shrink-0"
-                style={{
-                  backgroundColor: s <= step ? 'var(--color-green-primary)' : '#1e1e1e',
-                  color: s <= step ? 'var(--color-white)' : 'var(--color-gray)',
-                  cursor: s < step ? 'pointer' : s === step ? 'default' : 'not-allowed',
-                }}
-              >
-                {s < step ? (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 6L9 17l-5-5" />
-                  </svg>
-                ) : (
-                  s
+        <div className="flex items-start">
+          {(['Serviço', 'Data', 'Horário', 'Confirmar'] as const).map((label, idx) => {
+            const s = idx + 1
+            return (
+              <div key={s} className="flex items-start flex-1 last:flex-none">
+                <div className="flex flex-col items-center">
+                  <button
+                    onClick={() => goToStep(s as Step)}
+                    disabled={s > step}
+                    className="w-8 h-8 rounded-full text-xs font-bold flex items-center justify-center transition-colors flex-shrink-0"
+                    style={{
+                      backgroundColor: s <= step ? 'var(--color-green-primary)' : '#1e1e1e',
+                      color: s <= step ? 'var(--color-white)' : 'var(--color-gray)',
+                      cursor: s < step ? 'pointer' : s === step ? 'default' : 'not-allowed',
+                    }}
+                  >
+                    {s < step ? (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 6L9 17l-5-5" />
+                      </svg>
+                    ) : (
+                      s
+                    )}
+                  </button>
+                  <span className="text-[10px] mt-1 text-center" style={{ color: s <= step ? 'var(--color-green-light)' : 'var(--color-gray)' }}>
+                    {label}
+                  </span>
+                </div>
+                {idx < 3 && (
+                  <div className="flex-1 h-0.5 mt-4 mx-1" style={{ backgroundColor: s < step ? 'var(--color-green-primary)' : 'var(--color-border)' }} />
                 )}
-              </button>
-              {s < 4 && (
-                <div className="flex-1 h-0.5" style={{ backgroundColor: s < step ? 'var(--color-green-primary)' : 'var(--color-border)' }} />
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="flex justify-between mt-2">
-          {['Serviço', 'Data', 'Horário', 'Confirmar'].map((label, i) => (
-            <span key={label} className="text-[10px]" style={{ color: i + 1 <= step ? 'var(--color-green-light)' : 'var(--color-gray)' }}>
-              {label}
-            </span>
-          ))}
+              </div>
+            )
+          })}
         </div>
       </div>
 

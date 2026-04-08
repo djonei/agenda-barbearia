@@ -71,7 +71,6 @@ export default function CadastroPage() {
     return (
       <main
         className="min-h-dvh flex flex-col items-center justify-center px-4 py-12"
-        style={{ backgroundColor: 'var(--color-bg)' }}
       >
         <div
           className="w-full max-w-sm rounded-2xl p-8 text-center"
