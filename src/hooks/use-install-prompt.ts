@@ -1,66 +1,54 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
-}
+import { getDeferredPrompt, clearDeferredPrompt } from '@/lib/pwa'
 
 const DISMISSED_KEY = 'pwa_install_dismissed'
 
 export function useInstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
+  const [hasPrompt, setHasPrompt] = useState(false)
   const [isInstalled, setIsInstalled] = useState(false)
-  const [isIOS, setIsIOS] = useState(false)
   const [isIOSSafari, setIsIOSSafari] = useState(false)
   const [dismissed, setDismissed] = useState(false)
 
   useEffect(() => {
-    // Already installed (running in standalone / TWA)
+    // Already running as installed PWA (standalone)
     const standalone =
       window.matchMedia('(display-mode: standalone)').matches ||
       (navigator as Navigator & { standalone?: boolean }).standalone === true
     setIsInstalled(standalone)
 
-    // Previously dismissed by the user
+    // Previously dismissed
     setDismissed(localStorage.getItem(DISMISSED_KEY) === '1')
 
-    // iOS detection
+    // iOS Safari detection (not Chrome/Firefox on iOS)
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent)
-    setIsIOS(ios)
-
-    // iOS Safari (not Chrome/Firefox on iOS — those use WebKit but hide the prompt too)
     const iosSafari = ios && !/crios|fxios|opios/i.test(navigator.userAgent)
     setIsIOSSafari(iosSafari)
 
-    // Chrome / Edge Android — capture beforeinstallprompt
-    const onBeforeInstall = (e: Event) => {
-      e.preventDefault()
-      setDeferredPrompt(e as BeforeInstallPromptEvent)
-    }
-    window.addEventListener('beforeinstallprompt', onBeforeInstall)
+    // Check if PWACapture already stored a prompt
+    setHasPrompt(!!getDeferredPrompt())
 
-    // Track successful install
-    const onInstalled = () => {
-      setIsInstalled(true)
-      setDeferredPrompt(null)
-    }
-    window.addEventListener('appinstalled', onInstalled)
-
+    // React to events dispatched by PWACapture
+    const onPrompt = () => setHasPrompt(true)
+    const onInstalled = () => { setIsInstalled(true); setHasPrompt(false) }
+    window.addEventListener('pwa:prompt', onPrompt)
+    window.addEventListener('pwa:installed', onInstalled)
     return () => {
-      window.removeEventListener('beforeinstallprompt', onBeforeInstall)
-      window.removeEventListener('appinstalled', onInstalled)
+      window.removeEventListener('pwa:prompt', onPrompt)
+      window.removeEventListener('pwa:installed', onInstalled)
     }
   }, [])
 
   async function install(): Promise<boolean> {
-    if (!deferredPrompt) return false
-    await deferredPrompt.prompt()
-    const { outcome } = await deferredPrompt.userChoice
+    const prompt = getDeferredPrompt()
+    if (!prompt) return false
+    await prompt.prompt()
+    const { outcome } = await prompt.userChoice
     if (outcome === 'accepted') {
-      setDeferredPrompt(null)
+      clearDeferredPrompt()
       setIsInstalled(true)
+      setHasPrompt(false)
     }
     return outcome === 'accepted'
   }
@@ -70,10 +58,10 @@ export function useInstallPrompt() {
     setDismissed(true)
   }
 
-  // canInstall  → Chrome/Edge Android with deferred prompt ready
-  // showIOS     → iOS Safari, needs manual instructions
-  const canInstall = !isInstalled && !dismissed && !!deferredPrompt
-  const showIOS = !isInstalled && !dismissed && isIOS && isIOSSafari
+  // canInstall  → Chrome / Edge Android with prompt ready
+  // showIOS     → iOS Safari, needs manual share-sheet instructions
+  const canInstall = !isInstalled && !dismissed && hasPrompt
+  const showIOS = !isInstalled && !dismissed && isIOSSafari
 
   return { canInstall, showIOS, isInstalled, install, dismiss }
 }
