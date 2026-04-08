@@ -280,7 +280,7 @@ function DayView({
 
   const nowSP = nowInSaoPaulo()
   const isToday = date === formatDate(nowSP)
-  const currentHour = nowSP.getHours()
+  const currentTimeStr = `${String(nowSP.getHours()).padStart(2, '0')}:${String(nowSP.getMinutes()).padStart(2, '0')}`
 
   return (
     <div className={`grid gap-2 md:gap-4 ${barbers.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
@@ -305,6 +305,10 @@ function DayView({
 
         // Generate time slots
         const slots = generateTimeSlots(schedule)
+        // Current slot: last slot whose time is ≤ now (exact slot containing current time)
+        const currentSlotTime = isToday
+          ? slots.reduce((found, t) => (t <= currentTimeStr ? t : found), '')
+          : ''
         const barberAppointments = appointments.filter(
           (a) => a.barber_id === barber.id && a.date === date
         )
@@ -328,7 +332,7 @@ function DayView({
                   const bEnd = b.end_time.substring(0, 5)
                   return time >= bStart && time < bEnd
                 })
-                const isCurrentHour = isToday && parseInt(time.split(':')[0]) === currentHour
+                const isCurrentHour = time === currentSlotTime
 
                 if (apt) {
                   return (
