@@ -35,6 +35,13 @@ export default function SiteFooter() {
         </svg>
         (47) 3351-3050
       </a>
+
+      <a
+        href="/privacidade"
+        className="text-xs hover:opacity-80"
+      >
+        Política de Privacidade
+      </a>
     </footer>
   )
 }
