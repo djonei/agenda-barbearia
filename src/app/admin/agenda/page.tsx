@@ -133,17 +133,11 @@ export default function AgendaPage() {
         Administrativo
       </h1>
 
-      {/* Controls bar */}
-      <div className="flex flex-col gap-3 mb-4">
-        {/* Filter */}
-        <div className="flex items-center gap-2">
-          <FilterButton label="Ambos" active={filter === 'all'} onClick={() => setFilter('all')} />
-          {barbers.map((b) => (
-            <FilterButton key={b.id} label={b.name} active={filter === b.slug} onClick={() => setFilter(b.slug!)} />
-          ))}
-        </div>
-
-        {/* View mode + date nav */}
+      {/* Sticky date nav — sticks below mobile top bar (top-14) and at top on desktop */}
+      <div
+        className="sticky top-14 md:top-0 z-10 -mx-4 px-4 py-2 mb-3"
+        style={{ backgroundColor: 'var(--color-bg)', borderBottom: '1px solid var(--color-border)' }}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
             <button
@@ -174,10 +168,17 @@ export default function AgendaPage() {
             <button onClick={() => changeDate(viewMode === 'week' ? -7 : -1)} className="p-1.5" style={{ color: 'var(--color-gray)' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
             </button>
-            <button onClick={goToday} className="text-xs font-medium px-2 py-1 rounded" style={{ color: 'var(--color-green-light)' }}>
+            <button
+              onClick={goToday}
+              className="text-xs font-medium px-2 py-1 rounded"
+              style={{ color: currentDate === formatDate(today) ? 'var(--color-green-light)' : 'var(--color-gray)' }}
+            >
               Hoje
             </button>
-            <span className="text-sm font-medium min-w-[120px] text-center" style={{ color: 'var(--color-white)' }}>
+            <span
+              className="text-sm font-medium min-w-[120px] text-center"
+              style={{ color: currentDate === formatDate(today) ? 'var(--color-green-light)' : 'var(--color-white)' }}
+            >
               {dateLabel}
             </span>
             <button onClick={() => changeDate(viewMode === 'week' ? 7 : 1)} className="p-1.5" style={{ color: 'var(--color-gray)' }}>
@@ -185,6 +186,14 @@ export default function AgendaPage() {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Filter */}
+      <div className="flex items-center gap-2 mb-4">
+        <FilterButton label="Ambos" active={filter === 'all'} onClick={() => setFilter('all')} />
+        {barbers.map((b) => (
+          <FilterButton key={b.id} label={b.name} active={filter === b.slug} onClick={() => setFilter(b.slug!)} />
+        ))}
       </div>
 
       {loading ? (
