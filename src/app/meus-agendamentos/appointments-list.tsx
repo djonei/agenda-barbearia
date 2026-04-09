@@ -212,7 +212,7 @@ function AppointmentCard({
       }}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
           {apt.barber && (
             <div
               className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 overflow-hidden"
@@ -225,10 +225,17 @@ function AppointmentCard({
               )}
             </div>
           )}
-          <div>
-            <p className="text-sm font-semibold" style={{ color: 'var(--color-white)' }}>
-              {apt.service?.name || 'Serviço'}
-            </p>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold" style={{ color: 'var(--color-white)' }}>
+                {apt.service?.name || 'Serviço'}
+              </p>
+              {apt.service && !isCancelled && (
+                <span className="text-sm font-semibold shrink-0" style={{ color: 'var(--color-green-light)' }}>
+                  {formatPrice(apt.service.price)}
+                </span>
+              )}
+            </div>
             <p className="text-xs" style={{ color: 'var(--color-gray)' }}>
               {apt.barber?.name || 'Barbeiro'}
             </p>
@@ -237,7 +244,7 @@ function AppointmentCard({
 
         {isCancelled && (
           <span
-            className="text-[10px] font-bold uppercase px-2 py-1 rounded"
+            className="text-[10px] font-bold uppercase px-2 py-1 rounded shrink-0"
             style={{ backgroundColor: '#3a1a1a', color: 'var(--color-error)' }}
           >
             Cancelado
@@ -245,24 +252,19 @@ function AppointmentCard({
         )}
       </div>
 
-      <div className="mt-3 flex items-center gap-4 text-xs" style={{ color: 'var(--color-gray)' }}>
+      <div className="mt-3 flex items-center gap-4 text-sm" style={{ color: 'var(--color-gray)' }}>
         <span className="flex items-center gap-1">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
           </svg>
           {formatDateDisplay(apt.date)}
         </span>
         <span className="flex items-center gap-1">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
           </svg>
-          {apt.start_time}
+          {apt.start_time.substring(0, 5)}
         </span>
-        {apt.service && (
-          <span style={{ color: 'var(--color-green-light)' }}>
-            {formatPrice(apt.service.price)}
-          </span>
-        )}
       </div>
 
       {/* Cancel */}

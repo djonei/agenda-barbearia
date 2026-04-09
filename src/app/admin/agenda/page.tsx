@@ -39,6 +39,7 @@ export default function AgendaPage() {
   // Modal state
   const [manualBooking, setManualBooking] = useState<ManualBooking | null>(null)
   const [detailAppointment, setDetailAppointment] = useState<Appointment | null>(null)
+  const [blockFrom, setBlockFrom] = useState<ManualBooking | null>(null)
 
   // Save filter to localStorage
   useEffect(() => {
@@ -225,6 +226,25 @@ export default function AgendaPage() {
             setManualBooking(null)
             fetchAppointments(currentDate, viewMode)
           }}
+          onBlock={(barberId, date, time) => {
+            setManualBooking(null)
+            setBlockFrom({ barberId, date, time })
+          }}
+        />
+      )}
+
+      {/* Block slot modal (opened from free slot shortcut) */}
+      {blockFrom && (
+        <BlockFormModal
+          barbers={barbers}
+          defaultBarberId={blockFrom.barberId}
+          defaultDate={blockFrom.date}
+          defaultStartTime={blockFrom.time}
+          onClose={() => setBlockFrom(null)}
+          onSaved={() => {
+            setBlockFrom(null)
+            fetchAppointments(currentDate, viewMode)
+          }}
         />
       )}
 
@@ -331,6 +351,9 @@ function DayView({
                 const apt = barberAppointments.find(
                   (a) => a.start_time.substring(0, 5) === time && a.status === 'active'
                 )
+                const spanningApt = !apt ? barberAppointments.find(
+                  (a) => a.status === 'active' && time > a.start_time.substring(0, 5) && time < a.end_time.substring(0, 5)
+                ) : undefined
                 const cancelledApt = barberAppointments.find(
                   (a) => a.start_time.substring(0, 5) === time && a.status === 'cancelled'
                 )
@@ -360,6 +383,30 @@ function DayView({
                       </div>
                       <span className="text-[10px] text-right leading-tight" style={{ color: 'var(--color-gray)' }}>
                         {apt.service?.name}
+                      </span>
+                    </button>
+                  )
+                }
+
+                if (spanningApt) {
+                  return (
+                    <button
+                      key={time}
+                      onClick={() => onAppointmentClick(spanningApt)}
+                      className="w-full text-left rounded-lg px-3 flex items-center justify-between gap-2 h-[44px] overflow-hidden transition-colors"
+                      style={{
+                        backgroundColor: isCurrentHour ? 'rgba(234,179,8,0.12)' : 'rgba(45,122,58,0.1)',
+                        border: `1px solid ${isCurrentHour ? 'rgba(234,179,8,0.5)' : 'rgba(45,122,58,0.5)'}`,
+                      }}
+                    >
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-xs font-mono font-bold" style={{ color: 'var(--color-gray)' }}>{time}</span>
+                        <span className="text-xs" style={{ color: 'var(--color-gray)' }}>
+                          {(spanningApt.client?.name || spanningApt.client_name || 'Cliente').split(' ')[0]}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-right leading-tight" style={{ color: '#444' }}>
+                        {spanningApt.service?.name}
                       </span>
                     </button>
                   )
@@ -505,6 +552,9 @@ function WeekView({
               const dayAppts = appointments.filter(
                 (a) => a.date === dayStr && a.start_time.substring(0, 5) === time && a.status === 'active'
               )
+              const spanningAppt = dayAppts.length === 0 ? appointments.find(
+                (a) => a.date === dayStr && a.status === 'active' && time > a.start_time.substring(0, 5) && time < a.end_time.substring(0, 5)
+              ) : undefined
               const isBlocked = blockedSlots.some(
                 (b) => b.date === dayStr && b.start_time.substring(0, 5) <= time && b.end_time.substring(0, 5) > time
               )
@@ -528,6 +578,26 @@ function WeekView({
                     {dayAppts.length > 1 && (
                       <span style={{ color: 'var(--color-gray)' }}> +{dayAppts.length - 1}</span>
                     )}
+                  </button>
+                )
+              }
+
+              if (spanningAppt) {
+                return (
+                  <button
+                    key={dayStr}
+                    onClick={() => onAppointmentClick(spanningAppt)}
+                    className="rounded px-1 py-1.5 text-[10px] truncate text-left transition-colors"
+                    style={{ backgroundColor: 'rgba(45,122,58,0.12)', border: '1px solid rgba(45,122,58,0.4)' }}
+                  >
+                    {barbers.length > 1 && (
+                      <span style={{ color: '#444' }}>
+                        {spanningAppt.barber?.name?.charAt(0)}{' '}
+                      </span>
+                    )}
+                    <span style={{ color: 'var(--color-gray)' }}>
+                      {(spanningAppt.client?.name || spanningAppt.client_name || spanningAppt.service?.name || '').split(' ')[0]}
+                    </span>
                   </button>
                 )
               }
@@ -567,6 +637,7 @@ function ManualBookingModal({
   barbers,
   onClose,
   onSaved,
+  onBlock,
 }: {
   barberId: string
   date: string
@@ -575,6 +646,7 @@ function ManualBookingModal({
   barbers: Barber[]
   onClose: () => void
   onSaved: () => void
+  onBlock: (barberId: string, date: string, time: string) => void
 }) {
   const supabase = createClient()
   const barber = barbers.find((b) => b.id === barberId)
@@ -671,6 +743,16 @@ function ManualBookingModal({
           style={{ backgroundColor: 'var(--color-green-primary)', color: 'var(--color-white)' }}
         >
           {saving ? 'Salvando...' : 'Salvar'}
+        </button>
+      </div>
+
+      <div className="mt-2">
+        <button
+          onClick={() => onBlock(barberId, date, selectedTime)}
+          className="w-full rounded-xl py-2.5 text-sm font-medium min-h-[44px] transition-colors"
+          style={{ border: '1px solid var(--color-border)', color: 'var(--color-gray)' }}
+        >
+          Bloquear este horário
         </button>
       </div>
     </ModalOverlay>
@@ -793,6 +875,162 @@ function AppointmentDetailModal({
 }
 
 /* ---------- Shared Components ---------- */
+
+/* ---------- Block Form Modal ---------- */
+
+function BlockFormModal({
+  barbers,
+  defaultBarberId,
+  defaultDate,
+  defaultStartTime,
+  onClose,
+  onSaved,
+}: {
+  barbers: Barber[]
+  defaultBarberId: string | null
+  defaultDate?: string
+  defaultStartTime?: string
+  onClose: () => void
+  onSaved: () => void
+}) {
+  const supabase = createClient()
+  const [selectedBarber, setSelectedBarber] = useState<string>(defaultBarberId ?? (barbers[0]?.id ?? 'all'))
+  const [dateStart, setDateStart] = useState(defaultDate ?? '')
+  const [dateEnd, setDateEnd] = useState('')
+  const [allDay, setAllDay] = useState(false)
+
+  function addMinutes(time: string, mins: number): string {
+    const [h, m] = time.split(':').map(Number)
+    const total = h * 60 + m + mins
+    return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+  }
+
+  const [startTime, setStartTime] = useState(defaultStartTime ?? '12:00')
+  const [endTime, setEndTime] = useState(defaultStartTime ? addMinutes(defaultStartTime, 30) : '13:00')
+  const [reason, setReason] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  function getDatesInRange(start: string, end: string): string[] {
+    const dates: string[] = []
+    const cur = new Date(start + 'T12:00:00')
+    const last = new Date(end + 'T12:00:00')
+    while (cur <= last) {
+      dates.push(formatDate(cur))
+      cur.setDate(cur.getDate() + 1)
+    }
+    return dates
+  }
+
+  async function handleSave() {
+    if (!dateStart) return
+    setSaving(true)
+    setError(null)
+    const targetIds = selectedBarber === 'all' ? barbers.map((b) => b.id) : [selectedBarber]
+    const dates = dateEnd && dateEnd >= dateStart ? getDatesInRange(dateStart, dateEnd) : [dateStart]
+    const inserts = targetIds.flatMap((bid) =>
+      dates.map((d) => ({
+        barber_id: bid,
+        date: d,
+        all_day: allDay,
+        start_time: allDay ? '00:00' : startTime,
+        end_time: allDay ? '23:59' : endTime,
+        reason: reason.trim() || null,
+      }))
+    )
+    const { error: dbError } = await supabase.from('blocked_slots').insert(inserts)
+    if (dbError) { setError('Erro ao salvar bloqueio.'); setSaving(false); return }
+    onSaved()
+  }
+
+  return (
+    <ModalOverlay onClose={onClose}>
+      <h2
+        className="text-3xl mb-5 tracking-wide"
+        style={{ fontFamily: 'var(--font-bebas)', color: 'var(--color-white)' }}
+      >
+        Novo bloqueio
+      </h2>
+
+      <div className="flex flex-col gap-3">
+        <div>
+          <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-gray)' }}>Barbeiro</label>
+          <div className="flex flex-wrap gap-2">
+            {barbers.map((b) => (
+              <button key={b.id} type="button" onClick={() => setSelectedBarber(b.id)}
+                className="px-3 py-2 rounded-xl text-xs font-semibold min-h-[40px]"
+                style={{
+                  backgroundColor: selectedBarber === b.id ? 'var(--color-green-primary)' : 'transparent',
+                  color: selectedBarber === b.id ? 'var(--color-white)' : 'var(--color-gray)',
+                  border: `1px solid ${selectedBarber === b.id ? 'var(--color-green-primary)' : 'var(--color-border)'}`,
+                }}>
+                {b.name}
+              </button>
+            ))}
+            <button type="button" onClick={() => setSelectedBarber('all')}
+              className="px-3 py-2 rounded-xl text-xs font-semibold min-h-[40px]"
+              style={{
+                backgroundColor: selectedBarber === 'all' ? 'var(--color-green-primary)' : 'transparent',
+                color: selectedBarber === 'all' ? 'var(--color-white)' : 'var(--color-gray)',
+                border: `1px solid ${selectedBarber === 'all' ? 'var(--color-green-primary)' : 'var(--color-border)'}`,
+              }}>
+              Todos
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-gray)' }}>Data inicial</label>
+            <input type="date" value={dateStart} onChange={(e) => setDateStart(e.target.value)}
+              className="w-full rounded-xl px-4 py-3 text-sm outline-none min-h-[48px]"
+              style={{ backgroundColor: '#1e1e1e', border: '1px solid var(--color-border)', color: 'var(--color-white)' }} />
+          </div>
+          <div>
+            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-gray)' }}>
+              Data final <span style={{ fontWeight: 400 }}>(opcional)</span>
+            </label>
+            <input type="date" value={dateEnd} min={dateStart} onChange={(e) => setDateEnd(e.target.value)}
+              className="w-full rounded-xl px-4 py-3 text-sm outline-none min-h-[48px]"
+              style={{ backgroundColor: '#1e1e1e', border: '1px solid var(--color-border)', color: 'var(--color-white)' }} />
+          </div>
+        </div>
+
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} className="w-4 h-4" />
+          <span className="text-sm" style={{ color: 'var(--color-white)' }}>Dia inteiro</span>
+        </label>
+
+        {!allDay && (
+          <div className="grid grid-cols-2 gap-3">
+            <InputField label="Início" value={startTime} onChange={setStartTime} type="time" />
+            <InputField label="Fim" value={endTime} onChange={setEndTime} type="time" />
+          </div>
+        )}
+
+        <InputField label="Motivo (opcional)" value={reason} onChange={setReason} />
+      </div>
+
+      {error && (
+        <div className="mt-3 rounded-lg px-3 py-2 text-xs" style={{ backgroundColor: '#3a1a1a', color: 'var(--color-error)' }}>
+          {error}
+        </div>
+      )}
+
+      <div className="flex gap-2 mt-5">
+        <button onClick={onClose} className="flex-1 rounded-xl py-3 text-sm min-h-[48px]"
+          style={{ border: '1px solid var(--color-border)', color: 'var(--color-gray)' }}>
+          Cancelar
+        </button>
+        <button onClick={handleSave} disabled={saving || !dateStart}
+          className="flex-1 rounded-xl py-3 text-sm font-semibold min-h-[48px] disabled:opacity-50"
+          style={{ backgroundColor: 'var(--color-green-primary)', color: 'var(--color-white)' }}>
+          {saving ? 'Salvando...' : 'Salvar'}
+        </button>
+      </div>
+    </ModalOverlay>
+  )
+}
 
 function ModalOverlay({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
