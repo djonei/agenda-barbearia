@@ -17,6 +17,9 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
+  verification: {
+    google: 'y8l2_44-PcsvCl8C106qAIJ1xdb0A_Bewe4zQ_1eL2k',
+  },
   title: 'Barbearia Brusquense',
   description: 'Barbearia em Brusque com equipe preparada para oferecer cortes tradicionais e modernos, com atendimento de qualidade.',
   metadataBase: new URL('https://www.barbeariabrusquense.com.br'),
