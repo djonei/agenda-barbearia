@@ -28,13 +28,13 @@ export default function AppointmentsList({ appointments: initialAppointments }: 
   const now = nowInSaoPaulo()
   const todayStr = formatDate(now)
 
-  // Separate future and past
+  // Separate future and past — considera data + horário
   const future = appointments
-    .filter((a) => a.date >= todayStr && a.status === 'active')
+    .filter((a) => a.status === 'active' && new Date(`${a.date}T${a.start_time}`) > now)
     .sort((a, b) => a.date.localeCompare(b.date) || a.start_time.localeCompare(b.start_time))
 
   const pastAndCancelled = appointments
-    .filter((a) => a.date < todayStr || a.status === 'cancelled')
+    .filter((a) => a.status === 'cancelled' || new Date(`${a.date}T${a.start_time}`) <= now)
     .sort((a, b) => b.date.localeCompare(a.date) || b.start_time.localeCompare(a.start_time))
 
   function canCancel(apt: Appointment): boolean {
