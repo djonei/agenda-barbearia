@@ -26,19 +26,10 @@ function LoginContent() {
 
   const supabase = createClient()
 
-  async function handleGoogleLogin() {
+  function handleGoogleLogin() {
     setGoogleLoading(true)
     setError(null)
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-      },
-    })
-    if (error) {
-      setError('Erro ao entrar com Google. Tente novamente.')
-      setGoogleLoading(false)
-    }
+    window.location.href = `/auth/google?next=${encodeURIComponent(next)}`
   }
 
   async function handleEmailLogin(e: React.FormEvent) {
