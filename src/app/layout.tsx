@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Bebas_Neue, DM_Sans } from 'next/font/google'
 import './globals.css'
 import PWACapture from '@/components/pwa-capture'
+import { Analytics } from '@vercel/analytics/next'
 
 const bebasNeue = Bebas_Neue({
   weight: '400',
@@ -61,6 +62,7 @@ export default function RootLayout({
       <body>
         <PWACapture />
         {children}
+        <Analytics />
       </body>
     </html>
   )
